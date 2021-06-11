@@ -1,0 +1,27 @@
+[package]
+name = "fox-operator"
+version = "0.1.0"
+authors = ["Chetan Bhasin <connect@chetanbhasin.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "~1.6", features = ["macros", "rt-multi-thread"] }
+kube = { version = "~0.56", default-features = true, features = ["derive"] }
+kube-derive = "~0.56"
+kube-runtime = "~0.56"
+k8s-openapi = { version = "~0.11", default-features = false, features = ["v1_20"] }
+futures = "~0.3"
+# All serde dependencies are used to serialize/deserialize CRDs and other Kubernetes-related structs
+serde = "~1.0"
+serde_json = "~1.0"
+schemars = "~0.8"
+thiserror = "~1.0"
+fox-k8s-crds = { path = "../fox-k8s-crds" }
+
+[build-dependencies]
+schemars = "~0.8"
+serde = "~1.0"
+serde_yaml = "0.8.17"
+fox-k8s-crds = { path = "../fox-k8s-crds" }

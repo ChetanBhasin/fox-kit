@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+	"fox-operator",
+	"fox-k8s-crds",
+]
