@@ -64,31 +64,6 @@ spec:
                           type: integer
                           format: int32
                         nullable: true
-                httpIngress:
-                  description: A list of HTTP ingress points
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - container
-                      - endpoint
-                      - path
-                      - port
-                    properties:
-                      container:
-                        description: Name of the container from which this ingress be created
-                        type: string
-                      endpoint:
-                        description: "HTTP endpoint (domain, e.g., `something.example.com` or `example.com`)"
-                        type: string
-                      path:
-                        description: "Path on the defined endpoint (e.g., `/my-path`"
-                        type: string
-                      port:
-                        description: Exposed port of the container that will be targeted for this ingress
-                        type: integer
-                        format: int32
-                  nullable: true
                 name:
                   description: Name of the service
                   type: string

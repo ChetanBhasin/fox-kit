@@ -2,12 +2,41 @@ use crate::kubernetes_crd::{
     KubernetesCRD, Metadata, Names, ObjectSchema, OpenAPISchema, Properties, Spec, Version,
 };
 use kube::CustomResource;
-use schemars::{JsonSchema, schema_for};
+use schemars::gen::{SchemaGenerator, SchemaSettings};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
 pub struct FoxServiceStatus {
-    replicas: i32,
+    pub replicas: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
+pub struct FoxServiceContainer {
+    /// This is the name the container will be created with
+    pub name: String,
+    /// Container image reference (including tag)
+    pub image: String,
+    /// Command line arguments for running the container
+    pub args: Option<Vec<String>>,
+    /// Key value pairs (string, string) for environment variables
+    pub env: Option<HashMap<String, String>>,
+    /// Key value pairs (int, int) -> (actual, exposed) for ports for this container
+    /// All ports are exposed over TCP protocol
+    pub ports: Option<HashMap<i32, i32>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
+pub struct HttpIngress {
+    /// Name of the container from which this ingress be created
+    pub container: String,
+    /// Exposed port of the container that will be targeted for this ingress
+    pub port: i32,
+    /// HTTP endpoint (domain, e.g., `something.example.com` or `example.com`)
+    pub endpoint: String,
+    /// Path on the defined endpoint (e.g., `/my-path`
+    pub path: String,
 }
 
 /// Struct corresponding to the Specification (`spec`) part of the `FoxService` resource, directly
@@ -24,19 +53,33 @@ pub struct FoxServiceStatus {
     status = "FoxServiceStatus",
     namespaced
 )]
+#[serde(rename_all = "camelCase")]
 pub struct FoxServiceSpec {
     /// Name of the service
     pub name: String,
     /// Docker image (including the tag)
-    pub image: String,
-    /// Replicas of pods to spin up
     pub replicas: i32,
+    /// A list of containers that will be run in the same network in this service
+    pub containers: Vec<FoxServiceContainer>,
+    /// A list of HTTP ingress points
+    pub http_ingress: Option<Vec<HttpIngress>>,
 }
 
 impl FoxServiceSpec {
     pub fn kubernetes_crd() -> KubernetesCRD {
-        let schema = schema_for!(FoxServiceSpec).schema.into();
-        let status_schema = schema_for!(FoxServiceStatus).schema.into();
+        let mut schema_settings = SchemaSettings::openapi3();
+        schema_settings.inline_subschemas = true;
+        let schema_generator = SchemaGenerator::new(schema_settings);
+        let schema = schema_generator
+            .clone()
+            .into_root_schema_for::<FoxServiceSpec>()
+            .schema
+            .into();
+        let status_schema = schema_generator
+            .clone()
+            .into_root_schema_for::<FoxServiceStatus>()
+            .schema
+            .into();
         KubernetesCRD {
             api_version: "apiextensions.k8s.io/v1".to_string(),
             kind: "CustomResourceDefinition".to_string(),
@@ -60,7 +103,10 @@ impl FoxServiceSpec {
                     schema: OpenAPISchema {
                         open_apiv3schema: ObjectSchema {
                             type_: "object".to_string(),
-                            properties: Properties { spec: schema, status: Some(status_schema) },
+                            properties: Properties {
+                                spec: schema,
+                                status: Some(status_schema),
+                            },
                         },
                     },
                 }],

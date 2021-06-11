@@ -6,5 +6,7 @@ metadata:
   namespace: default # Namespace must exist and account in KUBECONFIG must have sufficient permissions
 spec:
   name: test-fox
-  image: inanimate/echo-server:latest
   replicas: 2 # Number of "FoxService" pods created.
+  containers:
+    - name: test-fox
+      image: inanimate/echo-server:latest

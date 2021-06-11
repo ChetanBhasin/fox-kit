@@ -105,14 +105,7 @@ async fn reconcile(
             // of `kube::Error` to the `Error` defined in this crate.
             finalizer::add(client.clone(), &name, &namespace).await?;
             // Invoke creation of a Kubernetes built-in resource named deployment with `n` fox service pods.
-            fox_service::deploy(
-                &fox_svc.spec,
-                client,
-                &fox_svc.name(),
-                fox_svc.spec.replicas,
-                &namespace,
-            )
-            .await?;
+            fox_service::deployment::create_deployment(client, &fox_svc.spec, &namespace).await?;
             Ok(ReconcilerAction {
                 // Finalizer is added, deployment is deployed, re-check in 10 seconds.
                 requeue_after: Some(Duration::from_secs(10)),
@@ -126,7 +119,8 @@ async fn reconcile(
             // automatically converted into `Error` defined in this crate and the reconciliation is ended
             // with that error.
             // Note: A more advanced implementation would for the Deployment's existence.
-            fox_service::delete(client.clone(), &fox_svc.name(), &namespace).await?;
+            fox_service::deployment::delete_deployment(client.clone(), &fox_svc.name(), &namespace)
+                .await?;
 
             // Once the deployment is successfully removed, remove the finalizer to make it possible
             // for Kubernetes to delete the `FoxService` resource.
